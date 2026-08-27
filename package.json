@@ -1,0 +1,15 @@
+{
+  "name": "okoli-report-alert",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Standalone script (no Firebase Blaze plan needed) that checks the okoli-52bf6 Firestore 'reports' collection for new user reports and e-mails an alert. Meant to run periodically via Windows Task Scheduler, not as part of the Android app.",
+  "main": "check-reports.js",
+  "scripts": {
+    "check": "node check-reports.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^12.6.0",
+    "nodemailer": "^6.9.15"
+  }
+}
