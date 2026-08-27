@@ -65,6 +65,17 @@ async function main() {
     const transcript = Array.isArray(report.transcript) && report.transcript.length > 0
       ? report.transcript.join('\n')
       : '(žádný přepis konverzace — chat byl prázdný nebo se ho nepodařilo načíst)';
+
+    // Reporter's track record. A uid that has filed many reports, especially across many
+    // different targets, is more likely a serial / false reporter — judge this report against
+    // that, and never act on a single uncorroborated one. Counted all-time from the whole
+    // collection, this report included.
+    const fromThisReporter = allDocs.filter((d) => d.data().reporterUid === report.reporterUid);
+    const distinctTargets = new Set(fromThisReporter.map((d) => d.data().reportedUid)).size;
+    const reporterFlag = fromThisReporter.length >= 5
+      ? '  !! hodně hlášení od jednoho uid — prověř, jestli to není serial / falešný reportér'
+      : null;
+
     const body = [
       `Nová nahlášení v appce Okolí`,
       ``,
@@ -73,6 +84,8 @@ async function main() {
       ``,
       `Nahlášený uživatel: ${report.reportedNickname} (uid: ${report.reportedUid})`,
       `Nahlásil: uid ${report.reporterUid}`,
+      `Historie reportéra: ${fromThisReporter.length} hlášení celkem, na ${distinctTargets} různých uživatelů`,
+      reporterFlag,
       `Lokace (geohash7): ${report.locationId}`,
       `Ping id: ${report.pingId}`,
       `Čas nahlášení: ${when}`,
@@ -83,7 +96,7 @@ async function main() {
       ``,
       `Firestore doc: reports/${doc.id}`,
       `https://console.firebase.google.com/project/okoli-52bf6/firestore/data/~2Freports~2F${doc.id}`,
-    ].join('\n');
+    ].filter((line) => line !== null).join('\n');
 
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
