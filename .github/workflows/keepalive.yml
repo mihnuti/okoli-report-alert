@@ -1,0 +1,30 @@
+name: keepalive
+
+# GitHub disables a repo's scheduled workflows after 60 days with no *commit* activity (workflow
+# runs alone don't count). This repo is otherwise near-silent, so this job pushes a tiny empty
+# commit twice a month to keep check-reports.yml's hourly schedule alive. Empty commits by the
+# github-actions bot don't re-trigger workflows, so there's no loop.
+
+on:
+  schedule:
+    - cron: "17 4 1,15 * *"   # 04:17 UTC on the 1st and 15th — ~15 days apart, well under 60
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "keepalive: keep scheduled workflows enabled [skip ci]"
+          git push
