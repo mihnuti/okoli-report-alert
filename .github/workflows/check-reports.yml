@@ -7,8 +7,10 @@ name: check-reports
 
 on:
   schedule:
-    # Top of every hour (UTC). GitHub may delay scheduled runs by a few minutes under load.
-    - cron: "0 * * * *"
+    # 37 min past every hour (UTC). Deliberately off the top of the hour: GitHub heavily
+    # delays or silently drops scheduled runs queued at :00 on the free plan. GitHub may
+    # still delay scheduled runs by a few minutes under load.
+    - cron: "37 * * * *"
   workflow_dispatch: {}
 
 # Never run two checks at once (they'd race on the `notified` flag; harmless but pointless).
