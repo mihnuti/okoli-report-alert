@@ -1,9 +1,10 @@
 name: check-reports
 
-# Polls the okoli-52bf6 Firestore `reports` collection and e-mails an alert for any report
-# not yet notified. Runs on GitHub's infrastructure so it does not depend on any local machine
-# being powered on. Secrets are configured in the repo: Settings -> Secrets and variables ->
-# Actions.
+# Polls two Firestore collections and e-mails an alert for any report not yet notified:
+#   - check-reports.js         -> okoli-52bf6  / `reports`   (Okolí)
+#   - check-reports-mihnuti.js -> mihnuti-398ef / `nahlaseni` (Mihnutí)
+# Runs on GitHub's infrastructure so it does not depend on any local machine being powered on.
+# Secrets are configured in the repo: Settings -> Secrets and variables -> Actions.
 
 on:
   schedule:
@@ -32,9 +33,20 @@ jobs:
 
       - run: npm ci --omit=dev
 
-      - run: node check-reports.js
+      - name: Okolí (reports)
+        run: node check-reports.js
         env:
           SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
+
+      # Runs even if the Okolí step failed, so one app's outage can't mute the other's alerts.
+      - name: Mihnutí (nahlaseni)
+        if: always()
+        run: node check-reports-mihnuti.js
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON_MIHNUTI }}
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}

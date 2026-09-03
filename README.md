@@ -1,20 +1,29 @@
 # okoli-report-alert
 
-Standalone script that checks the `reports` Firestore collection (project `okoli-52bf6`) for
-new user reports from the Okolí app and e-mails an alert (including a 60-minute chat transcript).
-No Firebase Blaze plan / Cloud Functions needed.
+Standalone scripts that check a Firestore `reports`-style collection for new user reports and
+e-mail an alert. No Firebase Blaze plan / Cloud Functions needed. One repo, two apps:
+
+| script | project | collection | e-mail subject |
+| --- | --- | --- | --- |
+| `check-reports.js` | `okoli-52bf6` | `reports` | `[Okolí] Nové nahlášení – <reason>` (incl. 60-min chat transcript) |
+| `check-reports-mihnuti.js` | `mihnuti-398ef` | `nahlaseni` | `[Mihnutí] Nové nahlášení` |
 
 Runs on **GitHub Actions** on a schedule (`.github/workflows/check-reports.yml`, hourly) so it
-does not depend on any local machine being on. Can also be run by hand.
+does not depend on any local machine being on. Both scripts run each tick; the Mihnutí step uses
+`if: always()` so one app's failure can't mute the other. Can also be run by hand.
 
 ## Secrets (repo → Settings → Secrets and variables → Actions)
 
 | secret | value |
 | --- | --- |
-| `SERVICE_ACCOUNT_JSON` | the entire Firebase service-account key JSON, pasted as one value (Firebase Console → Project settings → Service accounts → Generate new private key) |
+| `SERVICE_ACCOUNT_JSON` | entire Firebase service-account key JSON for **okoli-52bf6**, pasted as one value |
+| `SERVICE_ACCOUNT_JSON_MIHNUTI` | entire Firebase service-account key JSON for **mihnuti-398ef** |
 | `GMAIL_USER` | `sejbalove@gmail.com` |
-| `GMAIL_APP_PASSWORD` | 16-char Gmail App Password (Google Account → Security → 2-Step Verification → App passwords), **not** the account password — revocable any time |
+| `GMAIL_APP_PASSWORD` | 16-char Gmail App Password (Google Account → Security → App passwords), **not** the account password — revocable any time |
 | `ALERT_TO_EMAIL` | where alerts go (can equal `GMAIL_USER`) |
+
+Each app also keeps a copy of its script + a local Windows Task Scheduler task as a backup:
+`okoli-app/tools/report-alert/` and `mihnuti/nastroje/report-alert/`.
 
 ## Run by hand
 
@@ -22,7 +31,8 @@ does not depend on any local machine being on. Can also be run by hand.
 npm install
 # either export SERVICE_ACCOUNT_JSON=... plus the GMAIL_* / ALERT_TO_EMAIL vars,
 # or drop a service-account.json + .env next to the script (both gitignored)
-node check-reports.js
+node check-reports.js          # Okolí
+node check-reports-mihnuti.js  # Mihnutí
 ```
 
 ## De-duplication
